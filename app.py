@@ -14,6 +14,7 @@ import jwt
 from flask_cors import CORS
 from chat import ask, history_messages
 from flask_sqlalchemy import SQLAlchemy
+from database import db
 from db_service import create_user, find_user_by_email
 
 app = Flask(__name__)
@@ -22,7 +23,7 @@ CORS(app)
 app.config.from_object(os.environ['APP_SETTINGS'])
 app.config['Access-Control-Allow-Origin'] = '*'
 app.config["Access-Control-Allow-Headers"]="Content-Type"
-db = SQLAlchemy(app)
+db.init_app(app)
 
 # bypass http
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"

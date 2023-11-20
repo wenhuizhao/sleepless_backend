@@ -1,9 +1,10 @@
 
-from app import db
+#from app import db
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
- 
+from database import db 
+
 class User(db.Model):
     __tablename__ = 'users'
 
