@@ -12,7 +12,8 @@ import os, pathlib
 import google
 import jwt
 from flask_cors import CORS
-from chat import ask, history_messages
+from chat import ask
+from chat_history import history_messages
 from flask_sqlalchemy import SQLAlchemy
 from database import db
 from db_service import create_user, find_user_by_email
@@ -133,10 +134,12 @@ def home_page_user():
     )
 
 
-@app.route("/chat_messages")
+@app.route("/chat_messages", methods=["GET"])
 def chat_messages():
     current_user = get_current_user(request)
-    chat_messages = history_messages(current_user)
+    args = request.args
+    guest = args.get("guest")
+    chat_messages = history_messages(current_user, guest)
     if current_user: print(current_user.email)
     return Response (
         response=json.dumps({"messages": chat_messages}),
@@ -147,18 +150,36 @@ def chat_messages():
 @app.route("/message", methods=["POST"])
 def send_message():
     body = request.json
+    guest = body.get("guest")
     user = get_current_user(request)
-    answer = ask(body["question"], user)
+    answer = ask(body.get("question"), user, guest)
     return Response (
         response = json.dumps({"answer": answer})
     )
 
+
+@app.errorhandler(jwt.ExpiredSignatureError)
+def special_exception_handler(error):
+    return 'Token expired', 401
+
+@app.errorhandler(Exception)
+def all_exception_handler(error):
+   print(error)
+   return 'Error', 500
+
 def get_current_user(request):
     try:
-        encoded_jwt=request.headers.get("Authorization").split("Bearer ")[1]
-        decoded_jwt=jwt.decode(encoded_jwt, app.secret_key, algorithms=[algorithm,])
-        current_user = find_user_by_email(decoded_jwt['email'])
-        return current_user
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            encoded_jwt=request.headers.get("Authorization").split("Bearer ")[1]
+            decoded_jwt=jwt.decode(encoded_jwt, app.secret_key, algorithms=[algorithm,])
+            #print(decoded_jwt)
+            current_user = find_user_by_email(decoded_jwt['email'])
+            #print(current_user)
+            return current_user
+        return None
+    except jwt.ExpiredSignatureError as e:
+        raise e
     except Exception as e:
         print(e)
         return None

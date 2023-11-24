@@ -1,12 +1,19 @@
 google-auth-oauthlib
 google-auth
-flask==2.2.2
-flask_migrate==2.1.1
+flask~=2.2.2
+flask_migrate~=2.1.1
 pyjwt
 dotenv
 flask_cors
-psycopg2==2.8.4
-Flask-SQLAlchemy===3.0.2
-Flask-Migrate==2.5.2
-Flask-Script==2.0.6
- Werkzeug==2.3.7
+psycopg2~=2.8.4
+Flask-SQLAlchemy~==3.0.2
+Flask-Migrate~=2.5.2
+Flask-Script~=2.0.6
+Werkzeug~=2.3.7
+langchain~=0.0.332
+chromadb~=0.4.15
+openai~=0.28.1
+nltk~=3.8.1
+sentence-transformers~=2.2.2
+unstructured~=0.10.29
+python-docx~=1.1.0
