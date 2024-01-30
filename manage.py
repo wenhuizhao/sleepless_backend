@@ -7,6 +7,7 @@ from database import db
 
 from user import User
 from message import Message
+from guest import Guest
 
 app.config.from_object(os.environ['APP_SETTINGS'])
 db.init_app(app)

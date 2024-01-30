@@ -16,7 +16,8 @@ from chat import ask
 from chat_history import history_messages
 from flask_sqlalchemy import SQLAlchemy
 from database import db
-from db_service import create_user, find_user_by_email
+from db_service import alchemyencoder, create_user, find_user_by_email, all_blogs, create_blog, blog_by_id, \
+    sync_guest_data_to_user
 
 app = Flask(__name__)
 load_dotenv()
@@ -79,12 +80,16 @@ def callback():
     # removing the specific audience, as it is throwing error
     del id_info['aud']
     jwt_token=Generate_JWT(id_info)
-    create_user(
-        name = id_info.get('name'),
-        email = id_info.get('email'),
-        avatar = id_info.get('picture')
-    )
-    return redirect(f"{FRONTEND_URL}?jwt={jwt_token}")
+    current_user = find_user_by_email(id_info.get('email'))
+    new_user = "false"
+    if not current_user:
+        create_user(
+            name = id_info.get('name'),
+            email = id_info.get('email'),
+            avatar = id_info.get('picture')
+        )
+        new_user = "true"
+    return redirect(f"{FRONTEND_URL}?jwt={jwt_token}&new_user={new_user}")
     """ return Response(
         response=json.dumps({'JWT':jwt_token}),
         status=200,
@@ -113,6 +118,18 @@ def logout():
         mimetype='application/json'
     )
 
+@app.route("/sync_guest_user", methods=["POST"])
+def sync_guest_user():
+    body = request.json
+    guest_name = body.get("guest")
+    current_user = get_current_user(request)
+    if (current_user and guest_name):
+        sync_guest_data_to_user(guest_name, current_user)
+    return Response(
+        response=json.dumps({}),
+        status=200,
+        mimetype='application/json'
+    )
 
 @app.route("/home")
 @login_required
@@ -138,11 +155,18 @@ def home_page_user():
 def chat_messages():
     current_user = get_current_user(request)
     args = request.args
+    page = args.get('page', 1, type=int)
     guest = args.get("guest")
-    chat_messages = history_messages(current_user, guest)
-    if current_user: print(current_user.email)
+    messages_page = history_messages(current_user, guest, page)
+    #if current_user: print(current_user.email)
     return Response (
-        response=json.dumps({"messages": chat_messages}),
+        response=json.dumps({
+            "page": messages_page.page,
+            "per_page": messages_page.per_page,
+            "items": messages_page.items,
+            "total": messages_page.total,
+            "has_next": messages_page.has_next
+        }),
         status=200,
         mimetype='application/json'
     )
@@ -150,13 +174,39 @@ def chat_messages():
 @app.route("/message", methods=["POST"])
 def send_message():
     body = request.json
-    guest = body.get("guest")
+    guest_name = body.get("guest")
     user = get_current_user(request)
-    answer = ask(body.get("question"), user, guest)
+    answer = ask(body.get("question"), user, guest_name)
     return Response (
         response = json.dumps({"answer": answer})
     )
 
+@app.route("/blogs", methods=["GET"])
+def get_blogs():
+    blogs_data = all_blogs()
+    blogs = [r.to_dict(only=('id', 'title', 'time_created')) for r in blogs_data]
+    return Response(
+        response = json.dumps(blogs, default=alchemyencoder)
+    )
+
+@app.route("/blog/<blog_id>", methods=["GET"])
+def get_blog(blog_id):
+    blog_data = blog_by_id(blog_id)
+    return Response(
+        response = json.dumps(blog_data.to_dict())
+    )
+
+@app.route("/blog", methods=["POST"])
+def add_blog():
+    body = request.json
+    user = get_current_user(request)
+    if user:
+        create_blog(user, body.get("title"), body.get("content"))
+        return Response (
+            response = json.dumps({})
+        )
+    else:
+        return "permissoin denied", 401
 
 @app.errorhandler(jwt.ExpiredSignatureError)
 def special_exception_handler(error):

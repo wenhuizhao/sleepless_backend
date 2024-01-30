@@ -1,1 +1,6 @@
 Generic single-database configuration.
+
+## DB migrate
+After make model file changes, run the following command to upgrade database:
+`python3 manage.py db migrate`
+`python3 manage.py db upgrade`
