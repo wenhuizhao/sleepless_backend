@@ -1,5 +1,6 @@
 from message import Message, MessageType
 from datetime import datetime, timezone, timedelta
+from prompt_user import user_welcome_message_content
 
 SESSION_IN_HOURS = 4
 
@@ -21,7 +22,9 @@ def user_welcome_message(user, messages):
     if latest_message_in_session(messages):
         None
     else:
-        message = Message(text = "welcome", type = MessageType.BOT, user_id = user.id)
+        print(f'message, {user_welcome_message_content(user)}')
+        message = Message(text = user_welcome_message_content(user), type = MessageType.BOT, user_id = user.id)
+        # message = Message(text = 'welcome', type = MessageType.BOT, user_id = user.id)
         return message    
 
 def anonymous_welcome_message():

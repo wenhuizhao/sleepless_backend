@@ -16,7 +16,7 @@ engine = db.create_engine(os.environ['DATABASE_URL'])
 Session = sessionmaker(bind=engine)
 session = Session()
 
-PAGE_SIZE=10
+PAGE_SIZE=20
 
 def alchemyencoder(obj):
     """JSON encoder function for SQLAlchemy special classes."""
@@ -26,18 +26,22 @@ def alchemyencoder(obj):
         return float(obj)
 
 def create_user(name, email, avatar=None):
-    user = User(name=name, email=email, avatar=avatar)
+    user = User(name=name, email=email, avatar=avatar, data={})
     session.add(user)
     session.commit()
 
 def find_user_by_email(email):
-    user = session.execute(db.select(User).filter_by(email=email)).scalar_one()
+    try: 
+      user = session.execute(db.select(User).filter_by(email=email)).scalar_one()
+    except:
+      return None
     return user
 
 def create_guest(name):
-    guest = Guest(name=name)
+    guest = Guest(name=name, data={})
     session.add(guest)
     session.commit()
+    return guest
 
 def update_user(user):
     local_user = session.merge(user)
@@ -51,7 +55,10 @@ def update_guest(guest):
 
 def find_guest_by_name(name):
     #guest = Guest.query.filter_by(name=name).first()
-    guest = session.execute(db.select(Guest).filter_by(name=name)).scalar_one()
+    try:
+      guest = session.execute(db.select(Guest).filter_by(name=name)).scalar_one()
+    except:
+      return None
     return guest
 
 def create_message(user, text, type, guest=None):
@@ -92,16 +99,16 @@ def create_sleep_diary(user_id, last_night_get_into_bed_time, last_night_turn_of
     day = days_since_join_program(user_id)
     sleep_diary = find_sleep_diary_by_user_id_day(user_id, day)
     if sleep_diary:
-        if last_night_get_into_bed_time: sleep_diary['last_night_get_into_bed_time'] = last_night_get_into_bed_time
-        if last_night_turn_off_light_time: sleep_diary['last_night_turn_off_light_time'] = last_night_turn_off_light_time
-        if last_night_time_to_fall_asleep_in_minutes: sleep_diary["last_night_time_to_fall_asleep_in_minutes"]=last_night_time_to_fall_asleep_in_minutes
-        if last_night_number_of_times_wakeup: sleep_diary['last_night_number_of_times_wakeup'] = last_night_number_of_times_wakeup
-        if last_night_each_wakeup_time_in_minutes: sleep_diary['last_night_each_wakeup_time_in_minutes'] = last_night_each_wakeup_time_in_minutes
-        if this_morning_wakeup_time: sleep_diary['this_morning_wakeup_time'] = this_morning_wakeup_time
-        if this_morning_get_out_of_bed_time: sleep_diary['this_morning_get_out_of_bed_time'] = this_morning_get_out_of_bed_time
-        if last_night_sleep_quality: sleep_diary['last_night_sleep_quality'] = last_night_sleep_quality
-        if negative_sleep_thought: sleep_diary['negative_sleep_thought'] = negative_sleep_thought
-        if positive_sleep_thought: sleep_diary['positive_sleep_thought'] = positive_sleep_thought
+        if last_night_get_into_bed_time: sleep_diary.last_night_get_into_bed_time = last_night_get_into_bed_time
+        if last_night_turn_off_light_time: sleep_diary.last_night_turn_off_light_time = last_night_turn_off_light_time
+        if last_night_time_to_fall_asleep_in_minutes: sleep_diary.last_night_time_to_fall_asleep_in_minutes=last_night_time_to_fall_asleep_in_minutes
+        if last_night_number_of_times_wakeup: sleep_diary.last_night_number_of_times_wakeup = last_night_number_of_times_wakeup
+        if last_night_each_wakeup_time_in_minutes: sleep_diary.last_night_each_wakeup_time_in_minutes = last_night_each_wakeup_time_in_minutes
+        if this_morning_wakeup_time: sleep_diary.this_morning_wakeup_time = this_morning_wakeup_time
+        if this_morning_get_out_of_bed_time: sleep_diary.this_morning_get_out_of_bed_time = this_morning_get_out_of_bed_time
+        if last_night_sleep_quality: sleep_diary.last_night_sleep_quality = last_night_sleep_quality
+        if negative_sleep_thought: sleep_diary.negative_sleep_thought = negative_sleep_thought
+        if positive_sleep_thought: sleep_diary.positive_sleep_thought = positive_sleep_thought
     else:
         sleep_diary = SleepDiary(user_id, day, last_night_get_into_bed_time, last_night_turn_off_light_time, last_night_time_to_fall_asleep_in_minutes,
                  last_night_number_of_times_wakeup, last_night_each_wakeup_time_in_minutes, this_morning_wakeup_time,
@@ -126,6 +133,9 @@ def find_sleep_diaries_by_user_id(user_id, page=1):
 
 def sync_guest_data_to_user(guest_name, user):
     guest = find_guest_by_name(guest_name)
+    if not guest:
+        return
+    print (f'sync guest to user, {user}')
     if not user.data:
         user.data = {}
     print(f"guest.data:{guest.data}")
@@ -140,6 +150,16 @@ def sync_guest_data_to_user(guest_name, user):
         message.guest = None
         message.user_id = user.id
         save_message(message)
+
+def update_user_timezone(timezone, email):
+    with Session() as session:
+      user = session.execute(db.select(User).filter_by(email=email)).scalar_one()
+      print (f'update user timezone, {email}, {user}')
+      if not user: 
+          return
+      user.timezone = timezone
+      session.add(user)
+      session.commit()
 
 def create_blog(user, title, content):
     blog = Blog(user_id=user.id, title=title, content=content)

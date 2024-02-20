@@ -18,7 +18,7 @@ class SleepDiary(db.Model):
     last_night_turn_off_light_time = db.Column(db.String)
     last_night_time_to_fall_asleep_in_minutes = db.Column(db.Integer)
     last_night_number_of_times_wakeup = db.Column(db.Integer)
-    last_night_each_wakeup_time_in_minutes = db.Column(db.String)
+    last_night_each_wakeup_time_in_minutes = db.Column(JSONB)
     this_morning_wakeup_time = db.Column(db.String)
     this_morning_get_out_of_bed_time = db.Column(db.String)
     last_night_sleep_quality = db.Column(db.String)

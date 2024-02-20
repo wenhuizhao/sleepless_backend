@@ -44,7 +44,9 @@ def transfer_message(message):
 def load_messages(user, guest_name, save_welcome=False, page=1):
     if user:
         messages_page = messages_by_user_id(user.id, page)
+        print('load_messages')
         welcome_message = user_welcome_message(user, messages_page.items)
+        print(f'welcome message, {welcome_message}')
     elif guest_name:
         messages_page = messages_by_guest(guest_name, page)
         welcome_message = guest_welcome_messages(guest_name, messages_page.items)
@@ -53,6 +55,7 @@ def load_messages(user, guest_name, save_welcome=False, page=1):
         welcome_message = anonymous_welcome_message()
     #print(f"loadmessage, page={page}, message_page.len:{len(messages_page.items)}, welcome_message:{welcome_message}")
     if page == 1 and welcome_message:
+        print ('append welcome message')
         messages_page.items.append(welcome_message)
         if user or guest_name:
             save_message(welcome_message)

@@ -15,7 +15,6 @@ def guest_ask(guest_name, question):
     new_session = False
     if len(history_messages) <= 2:
         new_session = True
- 
     data = ask_question(question=question, guest=guest, new_session=new_session, history_messages=history_messages)
     answers = data["answers"]
     meta = data["meta"]

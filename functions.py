@@ -8,7 +8,12 @@ def update_sleep_info(arguments_str, user=None, guest=None):
     if not user and not guest:
         return output
     arguments_dict = json.loads(arguments_str)
-    data = dict(user.data) if user else dict(guest.data)
+    if user and user.data:
+        data = dict(user.data)
+    elif guest and guest.data:
+        data = dict(guest.data)
+    else:
+        data = {}
     for key in arguments_dict:
         if key in ["sleep_problem_duration", "sleep_habit", "six_week_program_start_time"]:
             value = arguments_dict[key]

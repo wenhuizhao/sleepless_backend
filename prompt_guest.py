@@ -5,7 +5,7 @@ from prompt_helper import add_question_chat_history
 def get_guest_prompt(question, guest, history_messages=[]):
     print(f"get_prompt guest.data: {guest.data}")
 
-    if guest and guest.data.get('sleep_problem_duration') == 'long_term':
+    if guest and guest.data and guest.data.get('sleep_problem_duration') == 'long_term':
         print("long term")
         if guest.data and guest.data.get('sleep_habit') == 'same_time_everydata':
             prompt = long_term_sleep_problem_fixed_habit_prompt()
@@ -31,5 +31,9 @@ def get_guest_prompt(question, guest, history_messages=[]):
     else:
         prompt = unknown_sleep_problem_duration_prompt()    
 
+    prompt += f"""
+    if the user agrees to join the six-week program, ask them to log in
+    """
+    print(f"guest prompt: {prompt}")
     return add_question_chat_history(prompt, question, history_messages)
 

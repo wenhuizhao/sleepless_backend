@@ -17,7 +17,7 @@ from chat_history import history_messages
 from flask_sqlalchemy import SQLAlchemy
 from database import db
 from db_service import alchemyencoder, create_user, find_user_by_email, all_blogs, create_blog, blog_by_id, \
-    sync_guest_data_to_user
+    sync_guest_data_to_user, update_user_timezone
 
 app = Flask(__name__)
 load_dotenv()
@@ -66,6 +66,7 @@ def Generate_JWT(payload):
 
 @app.route("/callback")
 def callback():
+    print ("callback")
     flow.fetch_token(authorization_response=request.url)
     credentials = flow.credentials
     request_session = requests.session()
@@ -125,6 +126,18 @@ def sync_guest_user():
     current_user = get_current_user(request)
     if (current_user and guest_name):
         sync_guest_data_to_user(guest_name, current_user)
+    return Response(
+        response=json.dumps({}),
+        status=200,
+        mimetype='application/json'
+    )
+
+@app.route("/sync_timezone_user", methods=["POST"])
+def sync_timezone_user():
+    body = request.json
+    timezone = body.get("timezone")
+    current_user = get_current_user(request)
+    update_user_timezone(timezone, current_user.email)
     return Response(
         response=json.dumps({}),
         status=200,
@@ -236,4 +249,4 @@ def get_current_user(request):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000, host="0.0.0.0")
+    app.run(debug=True, port=4000, host="0.0.0.0")

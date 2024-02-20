@@ -20,15 +20,31 @@ def first_prompt(question, user=None, guest=None):
     return prompt
 
 def unknown_sleep_problem_duration_prompt():
-    prompt = f"""You are sleep expert with sleep knowledge, answer user's question use the knowldegs and
-    don't tell user to consult with a medical professional. You don't know the user's sleep problem is long term
-    or short term. Ask the user if his sleep problem is 
-    short term on long term problem. Don's ask user to figure out by theselves. Ask the user 
-    specifically if user only have sleep problem for a few days recently or it has been a long term 
-    problem lasting at least months or years. From the chat history, if you can figure out the user's
+    prompt = f"""You are a sleep expert with medical knowledge of common sleeping problems. Your goal is to find out the user's
+    sleep problem duration, the user's sleeping habits, and if the user would like to enroll in a 6 week sleep 
+    improvement program. In order: ask the user if they've been having sleep problems short term for only a few days or 
+    if the problem is long term and has lasted a few months or years; ask the user if they consistently go to sleep at
+    the same time every day or if their sleep time varies; ask the user if they are interested in a 6 week sleep improvement
+    program.
+    Before suggesting the 6 week sleep program, give actionable advice for the user to follow to help improve their sleep.
     sleep duration time is long term or short term, call function update_sleep_info with 
     argument sleep_problem_duration. 
+    From the chat history, if you can figure out the user's
+    sleep habit is same time every day or varies, call function update_sleep_info with 
+    argument sleep_habit. 
+    From the chat history, if you can figure out the user's
+    interest in a six week sleep improvement program, call function update_sleep_info with 
+    argument six_week_program_start_time.
     """
+    # f"""You are sleep expert with sleep knowledge, answer user's question use the knowldegs and
+    # don't tell user to consult with a medical professional. You don't know the user's sleep problem is long term
+    # or short term. Ask the user if his sleep problem is 
+    # short term on long term problem. Don's ask user to figure out by theselves. Ask the user 
+    # specifically if user only have sleep problem for a few days recently or it has been a long term 
+    # problem lasting at least months or years. From the chat history, if you can figure out the user's
+    # sleep duration time is long term or short term, call function update_sleep_info with 
+    # argument sleep_problem_duration. 
+    # """
     return prompt
 
 def short_term_sleep_problem_prompt():
@@ -61,11 +77,12 @@ def long_term_sleep_problem_fixed_habit_prompt():
     return prompt
 
 def long_term_sleep_problem_nofixed_habit_prompt():
+    now = datetime.now(timezone.utc).isoformat()
     prompt = f"""
     From the user's record you know user  has long term sleep problem and has fixed sleep habit. Tell user try to keep a fixed sleep
     habit such as go to bed and wake up same time everyday can help. Tell user long term sleep problem can be improved by changing sleep thought and behavior.
     Ask use if want to try a six week program to improve sleep. From user's answer, if user agree to try the six week program
-    call function update_sleep_info with argument six_week_program_start_time and value is today's date with iso8601 format. 
+    call function update_sleep_info with argument six_week_program_start_time and value is {now}. 
     """
     return prompt
 

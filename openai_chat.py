@@ -80,14 +80,16 @@ def ask_question(question, new_session, history_messages, user=None, guest=None)
         elif guest:
             prompt = get_guest_prompt(question, guest=guest, history_messages=history_messages)
             if guest.thread_id:
+                print (f'thread id already exists, {guest.thread_id}')
                 thread_id = guest.thread_id
             else:
                 thread = client.beta.threads.create()
                 thread_id = thread.id
+                print (f'threadid, {thread_id}')
                 guest.thread_id = thread_id
                 update_guest(guest)
 
-    print(f"threads.messages.create with  thread_id:{thread_id}, content:{prompt}")
+    print(f"threads.messages.create with  thread_id:{thread_id}")
     client.beta.threads.messages.create(
         thread_id = thread_id,
         role = "user",
@@ -128,5 +130,5 @@ def ask_question(question, new_session, history_messages, user=None, guest=None)
     for r in responses:
         #print(f"response:{r}")
         res += r
-    print(f"responses:{res}")
+    # print(f"responses:{res}")
     return { "answers": res, "meta": meta}
