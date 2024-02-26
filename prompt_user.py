@@ -45,9 +45,9 @@ def get_user_prompt_in_six_week_program(user, question, history_messages=[]):
         The user is in the six week program. Today is the number {days} days in the program.
         You already collected users sleep diary for yesterday. Here is user's sleep diary for yesterday:
         {sleep_diary.to_s()}
-        Answer user's questions based on his sleep diary history:
-        {sleep_diary_history}
-        """
+        """ + prompt_in_program(days)
+        # Answer user's questions based on his sleep diary history:
+        # {sleep_diary_history}
     else:
         prompt = user_sleep_program_day_prompt(days)
     return add_question_chat_history(prompt, question, history_messages)
@@ -69,7 +69,7 @@ def user_welcome_message_content(user):
 def user_sleep_program_day_prompt(days):
     return f"""
         The user is in the six week program. Today is the number {days} days in the program. 
-        Collect the following information from the user:
+        Collect the following information from the user. Only use messages from Day {days}:
         1. time the user get into bed last night,
         2. time the user turned off light last night,
         3. time it takes for the user to fall asleep last night,
@@ -133,3 +133,25 @@ def user_sleep_diary_history(user):
     Negative sleep thought previous night for those days: {negative_sleep_thought},
     Positie sleep thought previous night for those days: {positive_sleep_thought}
     """
+
+def prompt_in_program(days_in_program):
+    week = days_in_program // 7
+    if (week==0):
+        prompt=f"""
+        Give the user sleep advice based on Chapter 5 'Changing Your Thoughts About Sleep'
+        of the book 'Say Goodnight to Insomnia' by Gregg D Jacobs.
+        """
+    elif (week==1):
+        prompt=f"""
+        Give the user sleep advice based on Chapter 6 Establishing Sleep Promoting Habits" 
+        of the book "Say Goodnight to Insomnia" by Gregg D Jacobs.
+        """
+    elif (week==2):
+        prompt=f"""
+        Give the user sleep advice based on Chapter 7 'Lifestyle and Environmental Factors that Affect Sleep'
+        of the book 'Say Goodnight to Insomnia' by Gregg D Jacobs.
+        """
+    prompt += """
+        Do not mention the book name and author name in your response.
+        """
+    return prompt

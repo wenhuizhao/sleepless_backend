@@ -10,6 +10,7 @@ from guest import Guest
 from sleep_diary import SleepDiary
 import dateutil.parser
 from datetime import datetime, timezone
+from date_util import days_in_program
 
 load_dotenv()
 engine = db.create_engine(os.environ['DATABASE_URL'])
@@ -86,7 +87,7 @@ def days_since_join_program(user_id):
     user = User.query.get(user_id)
     if user.data and user.data.get('six_week_program_start_time'):
         program_start_time = dateutil.parser.isoparse(user.data.get('six_week_program_start_time'))
-        days = (datetime.now(timezone.utc) - program_start_time).days
+        days = days_in_program (user, program_start_time)
     else:
         days = 0
         user.data['six_week_program_start_time'] = datetime.now(timezone.utc).isoformat()
