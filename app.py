@@ -18,6 +18,7 @@ from flask_sqlalchemy import SQLAlchemy
 from database import db
 from db_service import alchemyencoder, create_user, find_user_by_email, all_blogs, create_blog, blog_by_id, \
     sync_guest_data_to_user, update_user_timezone
+from s3_util import upload_file_to_s3
 
 app = Flask(__name__)
 load_dotenv()
@@ -221,6 +222,35 @@ def add_blog():
     else:
         return "permissoin denied", 401
 
+@app.route("/upload_file", methods=["POST"])
+def upload_file():
+    if 'file' not in request.files:
+        return "empty file", 400
+    file = request.files['file']
+
+    # check whether a file is selected
+    if file.filename == '':
+        return "no file chosen", 400
+
+    # check whether the file extension is allowed (eg. png,jpeg,jpg,gif)
+    if file and allowed_file(file.filename):
+        output = upload_file_to_s3(file) 
+        
+        # if upload success,will return file name of uploaded file
+        if output:
+            return Response (
+                response=json.dumps({
+                    "file": output
+                }),
+                status=200,
+                mimetype='application/json'
+            )
+        else:
+            return "error", 500       
+    # if file extension not allowed
+    else:
+        return "wrong file format", 400
+
 @app.errorhandler(jwt.ExpiredSignatureError)
 def special_exception_handler(error):
     return 'Token expired', 401
@@ -247,6 +277,11 @@ def get_current_user(request):
         print(e)
         return None
 
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+# function to check file extension
+def allowed_file(filename):
+    return '.' in filename and \
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 if __name__ == "__main__":
     app.run(debug=True, port=4000, host="0.0.0.0")
