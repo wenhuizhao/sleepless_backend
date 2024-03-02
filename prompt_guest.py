@@ -7,7 +7,7 @@ def get_guest_prompt(question, guest, history_messages=[]):
 
     if guest and guest.data and guest.data.get('sleep_problem_duration') == 'long_term':
         print("long term")
-        if guest.data and guest.data.get('sleep_habit') == 'same_time_everydata':
+        if guest.data and guest.data.get('sleep_habit') == 'same_time_every_day':
             prompt = long_term_sleep_problem_fixed_habit_prompt()
             prompt += f"""
             Ask he user if he want to try the six week sleep program. From user's answer if you know

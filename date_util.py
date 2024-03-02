@@ -9,3 +9,13 @@ def days_in_program(user, program_start_time):
   if (hours < 4):
     days -= 1
   return days
+
+def time_difference(from_time, to_time):
+  if (from_time == None or to_time == None):
+    return None
+  
+  diff = to_time - from_time
+  if (diff < 0):
+    diff += 2400
+    
+  return diff

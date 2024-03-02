@@ -26,8 +26,9 @@ def unknown_sleep_problem_duration_prompt():
     if the problem is long term and has lasted a few months or years; ask the user if they consistently go to sleep at
     the same time every day or if their sleep time varies; ask the user if they are interested in a 6 week sleep improvement
     program.
-    Before suggesting the 6 week sleep program, give actionable advice for the user to follow to help improve their sleep.
-    sleep duration time is long term or short term, call function update_sleep_info with 
+    Only ask one question at a time.
+    Before suggesting the 6 week sleep program (the user has not joined yet), give actionable advice for the user to follow to help 
+    improve their sleep. sleep duration time is long term or short term, call function update_sleep_info with 
     argument sleep_problem_duration. 
     From the chat history, if you can figure out the user's
     sleep habit is same time every day or varies, call function update_sleep_info with 

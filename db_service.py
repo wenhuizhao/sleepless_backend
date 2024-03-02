@@ -128,8 +128,14 @@ def find_sleep_diary_by_user_id_day(user_id, day):
         sleep_diary = None
     return sleep_diary
         
-def find_sleep_diaries_by_user_id(user_id, page=1):
-    sleep_diaries = SleepDiary.query.filter_by(user_id=user_id).order_by(SleepDiary.day.desc()).paginate(page=page, per_page=PAGE_SIZE)
+def find_sleep_diaries_by_user_id(user_id, page=1, week=None):
+    if week==None:
+      sleep_diaries = SleepDiary.query.filter_by(user_id=user_id).order_by(SleepDiary.day.desc()).paginate(page=page, per_page=PAGE_SIZE)
+    else:
+      sleep_diaries = SleepDiary.query.filter(
+          SleepDiary.user_id == user_id,
+          SleepDiary.day // 7 == week
+      ).order_by(SleepDiary.day.desc()).paginate(page=page, per_page=PAGE_SIZE)
     return sleep_diaries
 
 def sync_guest_data_to_user(guest_name, user):
