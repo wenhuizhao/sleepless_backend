@@ -15,6 +15,7 @@ from flask_cors import CORS
 from chat import ask
 from chat_history import history_messages
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from database import db
 from db_service import alchemyencoder, create_user, find_user_by_email, all_blogs, create_blog, blog_by_id, \
     sync_guest_data_to_user, update_user_timezone
@@ -27,6 +28,7 @@ app.config.from_object(os.environ['APP_SETTINGS'])
 app.config['Access-Control-Allow-Origin'] = '*'
 app.config["Access-Control-Allow-Headers"]="Content-Type"
 db.init_app(app)
+migrate = Migrate(app, db)
 
 # bypass http
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
