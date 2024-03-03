@@ -1,4 +1,3 @@
-from gpt import get_qa_chain
 from chat_history import chat_history
 from answer_post_process import process_answer
 from openai_chat import ask_question

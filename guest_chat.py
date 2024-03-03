@@ -1,5 +1,4 @@
 
-from gpt import get_qa_chain
 from chat_history import chat_history
 from prompt_base import first_prompt
 from answer_post_process import process_answer

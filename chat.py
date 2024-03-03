@@ -2,7 +2,6 @@ from db_service import create_message
 from message import MessageType
 from guest_chat import guest_ask
 from user_chat import user_ask
-from anonymous_chat import anonymous_ask
 
 BOT_USER_NAME = "chatbot"
 
