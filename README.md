@@ -1,7 +1,9 @@
 ## How to set up
+
 clone the code
 install postgres
 create .env file with content
+
 ```
 DB_NAME=sleeplesschat
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/sleepless_chat
@@ -16,8 +18,13 @@ OPENAI_API_KEY=
 ```
 
 ## How to run
-`pip3  install -r requirements.txt`
-`python3 manager.py db migrate`
-`python3 manager.py db upgrade`
-`python3 app.py`
 
+Create virtualenv once:
+`python3 -m venv venv`
+
+Activate the virtualenv:
+`source venv/bin/activate`
+`pip3  install -r requirements.txt`
+`flask db migrate`
+`flask db upgrade`
+`python3 app.py`
