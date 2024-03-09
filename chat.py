@@ -12,7 +12,7 @@ def ask(question, user, guest_name):
     elif guest_name:
         response = guest_ask(guest_name, question)
     else:
-        response = anonymous_ask(question)
+        response = {"answer": "", "meta": {}}
     answers = response["answers"]
     meta = response["meta"]
     create_message(user=user, text=answers, guest=guest_name, type=MessageType.BOT)

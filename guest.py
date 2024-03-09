@@ -9,7 +9,7 @@ from sqlalchemy.sql import func
 class Guest(db.Model):
     __tablename__ = 'guests'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String())
     thread_id = db.Column(db.String())
     data = db.Column(JSONB)

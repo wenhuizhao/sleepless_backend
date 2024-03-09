@@ -11,7 +11,7 @@ class Blog(db.Model, SerializerMixin):
     __tablename__ = 'blogs'
     serialize_only = ('id', 'user_id', 'title', 'content', 'time_created')
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), index=True, nullable=True)
     title = db.Column(db.String())
     content = db.Column(db.String())

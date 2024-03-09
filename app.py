@@ -67,7 +67,7 @@ def Generate_JWT(payload):
     return encoded_jwt
 
 
-@app.route("/callback")
+@app.route("/callback", methods=["GET"])
 def callback():
     print ("callback")
     flow.fetch_token(authorization_response=request.url)

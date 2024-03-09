@@ -28,8 +28,11 @@ def alchemyencoder(obj):
 
 def create_user(name, email, avatar=None):
     user = User(name=name, email=email, avatar=avatar, data={})
-    session.add(user)
-    session.commit()
+    try:
+        session.add(user)
+        session.commit()
+    except:
+        session.rollback()
 
 def find_user_by_email(email):
     try: 
@@ -40,19 +43,28 @@ def find_user_by_email(email):
 
 def create_guest(name):
     guest = Guest(name=name, data={})
-    session.add(guest)
-    session.commit()
+    try:
+        session.add(guest)
+        session.commit()
+    except:
+        session.rollback()    
     return guest
 
 def update_user(user):
-    local_user = session.merge(user)
-    session.add(local_user)
-    session.commit()
+    try:
+        local_user = session.merge(user)
+        session.add(local_user)
+        session.commit()
+    except:
+        session.rollback()
 
 def update_guest(guest):
-    local_guest = session.merge(guest)
-    session.add(local_guest)
-    session.commit()
+    try:
+        local_guest = session.merge(guest)
+        session.add(local_guest)
+        session.commit()
+    except:
+        session.rollback()
 
 def find_guest_by_name(name):
     #guest = Guest.query.filter_by(name=name).first()
@@ -71,9 +83,12 @@ def create_message(user, text, type, guest=None):
     save_message(message)
 
 def save_message(message):
-    local_message = session.merge(message)
-    session.add(local_message)
-    session.commit()
+    try:
+        local_message = session.merge(message)
+        session.add(local_message)
+        session.commit()
+    except:
+        session.rollback()
 
 def messages_by_user_id(user_id, page):
     messages = Message.query.filter_by(user_id=user_id).order_by(Message.time_created.desc()).paginate(page=page, per_page=PAGE_SIZE)
@@ -117,10 +132,13 @@ def create_sleep_diary(user_id, last_night_get_into_bed_time, last_night_turn_of
     save_sleep_diary(sleep_diary)
 
 def save_sleep_diary(sleep_diary):
-    local_sleep_diary = session.merge(sleep_diary)
-    session.add(local_sleep_diary)
-    session.commit()
-
+    try:
+        local_sleep_diary = session.merge(sleep_diary)
+        session.add(local_sleep_diary)
+        session.commit()
+    except:
+        session.rollback()
+    
 def find_sleep_diary_by_user_id_day(user_id, day):
     try:
         sleep_diary = session.execute(db.select(SleepDiary).filter_by(user_id=user_id, day=day)).scalar_one()
@@ -165,13 +183,19 @@ def update_user_timezone(timezone, email):
       if not user: 
           return
       user.timezone = timezone
-      session.add(user)
-      session.commit()
+      try:
+        session.add(user)
+        session.commit()
+      except:
+        session.rollback()
 
 def create_blog(user, title, content):
     blog = Blog(user_id=user.id, title=title, content=content)
-    session.add(blog)
-    session.commit()
+    try:
+        session.add(blog)
+        session.commit()
+    except:
+        session.rollback()
 
 def blog_by_id(blog_id):
     return session.scalar(db.select(Blog).where(Blog.id == blog_id))

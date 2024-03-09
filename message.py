@@ -14,7 +14,7 @@ class MessageType(enum.Enum):
 class Message(db.Model):
     __tablename__ = 'messages'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), index=True, nullable=True)
     text = db.Column(db.String())
     guest = db.Column(db.String(), index=True)

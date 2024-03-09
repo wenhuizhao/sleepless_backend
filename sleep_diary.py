@@ -11,7 +11,7 @@ from database import db
 class SleepDiary(db.Model):
     __tablename__ = 'sleep_diaries'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), index=True, nullable=True)
     day = db.Column(db.Integer)
     last_night_get_into_bed_time = db.Column(db.Integer)
