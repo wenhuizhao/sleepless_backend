@@ -114,7 +114,8 @@ def ask_question(question, new_session, history_messages, user=None, guest=None)
 
     print(f"run status: {run.status}")
     if run.status == 'failed':
-        return "Something is wrong. Please try again."
+        print (f"run, {run.last_error}")
+        return {"answers": "Something is wrong. Please try again.", "meta": meta}
     messages = client.beta.threads.messages.list(
         thread_id = thread_id
     )

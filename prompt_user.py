@@ -6,10 +6,12 @@ from db_service import find_sleep_diary_by_user_id_day, find_sleep_diaries_by_us
 from prompt_helper import add_question_chat_history
 from functools import reduce
 from date_util import days_in_program, time_difference
+from misc_util import average
 
 CORE_SLEEP_TIME = 530
 
 def get_user_prompt(question, user, history_messages=[]):
+    print("14 fellas")
     chat_history = "\n".join(history_messages)
     print(f"get_user_prompt user.data: {user.data}")
 
@@ -17,7 +19,6 @@ def get_user_prompt(question, user, history_messages=[]):
         prompt = get_user_prompt_in_six_week_program(user, question, history_messages)
 
     elif user.data and  user.data.get('sleep_problem_duration') == 'long_term':
-        print("long term")
         if user.data and user.data.get('sleep_habit') == 'same_time_everyday':
             prompt = long_term_sleep_problem_fixed_habit_prompt()
         elif user.data and user.data.get('sleep_habit') == 'not_fixed':
@@ -26,7 +27,6 @@ def get_user_prompt(question, user, history_messages=[]):
             prompt = long_term_sleep_problem_unknown_habit_prompt()
 
     elif user.data and  user.data.get('sleep_problem_duration') == 'short_term':
-        print("shortterm")
         prompt = short_term_sleep_problem_prompt()
     else:
         prompt = unknown_sleep_problem_duration_prompt()
@@ -41,19 +41,17 @@ def get_user_prompt_in_six_week_program(user, question, history_messages=[]):
     days = days_in_program(user, program_start_time)
     #days = (datetime.now(timezone.utc) - program_start_time).days
     sleep_diary = find_sleep_diary_by_user_id_day(user.id, days)
-    sleep_diary_history = user_sleep_diary_history(user)
+    #sleep_diary_history = user_sleep_diary_history(user)
     if sleep_diary:
-        print('44')
         prompt = f"""
         The user is in the six week program. Today is the number {days} days in the program.
         You already collected users sleep diary for yesterday. Here is user's sleep diary for yesterday:
         {sleep_diary.to_s()}
         """ + prompt_in_program(days, user)
-        print('50')
         # Answer user's questions based on his sleep diary history:
         # {sleep_diary_history}
     else:
-        prompt = user_sleep_program_day_prompt(days)
+        prompt = user_sleep_program_day_prompt(days, sleep_diary)
     return add_question_chat_history(prompt, question, history_messages)
 
 def user_welcome_message_content(user):
@@ -79,35 +77,82 @@ def has_positive_thought(sleep_diary):
     else:
         return False
 
-def core_sleep_time(sleep_diary):
-    fall_asleep_time = (sleep_diary.last_night_turn_off_light_time + sleep_diary.last_night_time_to_fall_asleep_in_minutes) % 2400
+def sleep_time(sleep_diary):
+    if (sleep_diary.last_night_turn_off_light_time == None or sleep_diary.last_night_time_to_fall_asleep_in_minutes == None or sleep_diary.this_morning_wakeup_time == None):
+        return
+    fall_asleep_time = (sleep_diary.last_night_turn_off_light_time + sleep_diary.last_night_time_to_fall_asleep_in_minutes) % 2360
     return time_difference(fall_asleep_time, sleep_diary.this_morning_wakeup_time)
 
+def average_sleep_time(sleep_diaries):
+     sleep_diaries_with_sleep_time = list(filter(lambda x: (sleep_time(x) != None), sleep_diaries))
+     count = len(sleep_diaries_with_sleep_time)
+     if (count == 0):
+        return None
+     average_sleep = round(sum(sleep_time(sleep_diary) for sleep_diary in sleep_diaries_with_sleep_time) / count, 2)
+     return average_sleep
+
+def time_in_bed(sleep_diary):
+    if (not sleep_diary.last_night_get_into_bed_time or not sleep_diary.this_morning_get_out_of_bed_time):
+      return
+    return time_difference(sleep_diary.last_night_get_into_bed_time, sleep_diary.this_morning_get_out_of_bed_time)
+
+def average_time_in_bed(sleep_diaries):
+    sleep_diaries_with_time_in_bed = list(filter(lambda x: (time_in_bed(x) != None), sleep_diaries))
+    count = len(sleep_diaries_with_time_in_bed)
+    if (count == 0):
+        return None
+    average_in_bed = round(sum(time_in_bed(sleep_diary) for sleep_diary in sleep_diaries_with_time_in_bed) / count, 2)
+    return average_in_bed
+
+def average_sleep_quality(sleep_diaries):
+    sleep_diaries_with_rating = list(filter(lambda x: ((x.last_night_sleep_quality) != None), sleep_diaries))
+    count = len(sleep_diaries_with_rating)
+    if (count == 0):
+        return None
+    average_rating = round(sum(sleep_diary.last_night_sleep_quality for sleep_diary in sleep_diaries_with_rating) / count, 2)
+    return average_rating
+
 def sleep_summary(user, week):
+    adjusted_week = week - 1
     if week == 0:
         return ''
     else:
-      sleep_diaries = find_sleep_diaries_by_user_id(user_id=user.id, week=week).items
+      sleep_diaries = find_sleep_diaries_by_user_id(user_id=user.id, week=adjusted_week).items
+      diary_count = sum(1 for sleep_diary in sleep_diaries)
       good_nights = sum(1 for sleep_diary in sleep_diaries if sleep_diary.last_night_sleep_quality and sleep_diary.last_night_sleep_quality >= 6)
-      core_sleeps = sum(1 for sleep_diary in sleep_diaries if core_sleep_time(sleep_diary) and core_sleep_time(sleep_diary) > CORE_SLEEP_TIME)
+      core_sleeps = sum(1 for sleep_diary in sleep_diaries if sleep_time(sleep_diary) and sleep_time(sleep_diary) > CORE_SLEEP_TIME)
       insomnia_nights = sum(1 for sleep_diary in sleep_diaries if sleep_diary.last_night_sleep_quality and sleep_diary.last_night_sleep_quality <= 3)
       positive_thoughts = sum(1 for sleep_diary in sleep_diaries if has_positive_thought(sleep_diary))
       
       summary_prompt = f"""
       Give the user a week one progress summary using their sleep diaries.
       Include:
-      1) the number of good nights of sleep, {good_nights}
-      2) the number of nights where the user obtained their core sleep of 5 and a half hours, {core_sleeps}
-      3) the number of nights of insomnia, {insomnia_nights}
-      4) the number of diaries with positive sleep thoughts, {positive_thoughts}
+      1) the number of sleep diaries recorded by the user, {diary_count}
+      2) the number of good nights of sleep, {good_nights}
+      3) the number of nights where the user obtained their core sleep of 5 and a half hours, {core_sleeps}
+      4) the number of nights of insomnia, {insomnia_nights}
+      5) the number of diaries with positive sleep thoughts, {positive_thoughts}
       """
+
+    if (week >= 2):
+      average_sleep = average_sleep_time(sleep_diaries)
+      average_in_bed = average_time_in_bed(sleep_diaries)
+      average_sleep_rating = average_sleep_quality(sleep_diaries)
+      summary_prompt += f"""
+      6) average sleep time, {average_sleep} (convert from military time for the user)
+      7) average time spent in bed, {average_in_bed} (convert from military time for the user)
+      8) average sleep quality rating from your diaries, {average_sleep_rating}
+      """
+          
       return summary_prompt
    
 
-def user_sleep_program_day_prompt(days):
+def user_sleep_program_day_prompt(days, sleep_diary):
+    print('150 fellas')
+    current_sleep_diary = sleep_diary.to_s() if sleep_diary else ""
     return f"""
-        The user is in the six week program. Today is the number {days} days in the program. 
-        Collect the following information from the user. Only use messages from Day {days}:
+        The user is in the six week sleep improvement program. Today is Day {days} of the program. 
+        Collect the following information from the user by asking them questions:
         1. time the user get into bed last night,
         2. time the user turned off light last night,
         3. time it takes for the user to fall asleep last night,
@@ -118,7 +163,8 @@ def user_sleep_program_day_prompt(days):
         8. sleep quality last night on a 0-10 scale (10 being the best, 0 being the worst).
         9. negative sleep thought last night. for example: I'm stressed that if don't fall asleep, tomorrow will be terrible.
         10. positive sleep thought last night for example: I feel good today. I will sleep well.
-        Ask the user every question, one question at a time. Every question must be asked once.
+        Ask the user every question, one question at a time. Only collect data from today's messages
+        Here is the data you've already collected today: {current_sleep_diary}
         When all the answers are collected,
         call function update_sleep_diary with arguments last_night_get_into_bed_time,  last_night_turn_off_light_time,
         last_night_time_to_fall_asleep_in_minutes, last_night_number_of_times_wakeup,
@@ -180,6 +226,7 @@ def user_sleep_diary_history(user, week=None):
     """
 
 def prompt_in_program(days_in_program, user):
+    print('228 fellas')
     week = days_in_program // 7
     if (week==0):
         prompt=f"""
@@ -200,11 +247,22 @@ def prompt_in_program(days_in_program, user):
     elif (week==2):
         prompt=f"""
         Give the user sleep advice based on Chapter 7 'Lifestyle and Environmental Factors that Affect Sleep'
-        of the book 'Say Goodnight to Insomnia' by Gregg D Jacobs.
+        of the book 'Say Goodnight to Insomnia' by Gregg D Jacobs. Pick one topic to give new
+        advice about for each day. Try to give only one piece of advice each day. 
         """
-    print ('191')
+    elif (week==3):
+        prompt=f"""
+        Give the user sleep advice based on Chapter 8 of the book 'Say Goodnight to Insomnia' by Gregg D Jacobs. 
+        Pick one topic to give new advice about for each day. Try to give only one piece of advice each day. 
+        """
+    elif (week==4):
+        prompt=f"""
+        Give the user sleep advice based on Chapter 9 of the book 'Say Goodnight to Insomnia' by Gregg D Jacobs.
+        Pick one topic to give new advice about for each day. Try to give only one piece of advice each day. 
+        """
+    print (f'191, week: {week}')
     prompt += sleep_summary(user, week)
-    prompt += """
+    prompt += f"""
         Do not mention the book name and author name in your response.
         """
     print ('195')

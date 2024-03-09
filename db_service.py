@@ -134,7 +134,7 @@ def find_sleep_diaries_by_user_id(user_id, page=1, week=None):
     else:
       sleep_diaries = SleepDiary.query.filter(
           SleepDiary.user_id == user_id,
-          SleepDiary.day // 7 == week
+          (SleepDiary.day - 1) // 7 == week
       ).order_by(SleepDiary.day.desc()).paginate(page=page, per_page=PAGE_SIZE)
     return sleep_diaries
 
