@@ -115,6 +115,8 @@ def ask_question(question, new_session, history_messages, user=None, guest=None)
     print(f"run status: {run.status}")
     if run.status == 'failed':
         print (f"run, {run.last_error}")
+        if (run.last_error.code == "rate_limit_exceeded"):
+            return {"answers": "Our OpenAI credits are used up. Please try again later.", "meta": meta}
         return {"answers": "Something is wrong. Please try again.", "meta": meta}
     messages = client.beta.threads.messages.list(
         thread_id = thread_id

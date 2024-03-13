@@ -216,7 +216,7 @@ def get_blog(blog_id):
 def add_blog():
     body = request.json
     user = get_current_user(request)
-    if user:
+    if user and user.isAdmin():
         create_blog(user, body.get("title"), body.get("content"))
         return Response (
             response = json.dumps({})
@@ -226,6 +226,10 @@ def add_blog():
 
 @app.route("/upload_file", methods=["POST"])
 def upload_file():
+    user = get_current_user(request)
+    if not user or not user.isAdmin():
+        return "permission denied", 401
+    
     if 'file' not in request.files:
         return "empty file", 400
     file = request.files['file']

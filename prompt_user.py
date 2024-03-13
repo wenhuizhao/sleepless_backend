@@ -11,7 +11,6 @@ from misc_util import average
 CORE_SLEEP_TIME = 530
 
 def get_user_prompt(question, user, history_messages=[]):
-    print("14 fellas")
     chat_history = "\n".join(history_messages)
     print(f"get_user_prompt user.data: {user.data}")
 
@@ -125,7 +124,7 @@ def sleep_summary(user, week):
       positive_thoughts = sum(1 for sleep_diary in sleep_diaries if has_positive_thought(sleep_diary))
       
       summary_prompt = f"""
-      Give the user a week one progress summary using their sleep diaries.
+      Give the user a week {adjusted_week} progress summary using their sleep diaries.
       Include:
       1) the number of sleep diaries recorded by the user, {diary_count}
       2) the number of good nights of sleep, {good_nights}
@@ -143,29 +142,29 @@ def sleep_summary(user, week):
       7) average time spent in bed, {average_in_bed} (convert from military time for the user)
       8) average sleep quality rating from your diaries, {average_sleep_rating}
       """
-          
-      return summary_prompt
+
+    print(f"sleep summary prompt: {summary_prompt}")          
+    return summary_prompt
    
 
 def user_sleep_program_day_prompt(days, sleep_diary):
-    print('150 fellas')
     current_sleep_diary = sleep_diary.to_s() if sleep_diary else ""
     return f"""
         The user is in the six week sleep improvement program. Today is Day {days} of the program. 
         Collect the following information from the user by asking them questions:
-        1. time the user get into bed last night,
+        1. time the user get into bed last night (please specify am/pm),
         2. time the user turned off light last night,
         3. time it takes for the user to fall asleep last night,
         4. number of times the user wake up last night,
         5. time lasted for each wakeup last night (skip if they didn't wake up last night),
         6. time the user wakeup this morning,
         7. time the user get off bed this morning,
-        8. sleep quality last night on a 0-10 scale (10 being the best, 0 being the worst).
+        8. sleep quality last night on a 1-10 scale (10 being the best, 1 being the worst).
         9. negative sleep thought last night. for example: I'm stressed that if don't fall asleep, tomorrow will be terrible.
         10. positive sleep thought last night for example: I feel good today. I will sleep well.
         Ask the user every question, one question at a time. Only collect data from today's messages
         Here is the data you've already collected today: {current_sleep_diary}
-        When all the answers are collected,
+        Only when every single answer has been collected,
         call function update_sleep_diary with arguments last_night_get_into_bed_time,  last_night_turn_off_light_time,
         last_night_time_to_fall_asleep_in_minutes, last_night_number_of_times_wakeup,
         last_night_each_wakeup_time_in_minutes, this_morning_wakeup_time, this_morning_get_out_of_bed_time,
@@ -196,7 +195,6 @@ def user_sleep_diary_history(user, week=None):
       sleep_diaries = find_sleep_diaries_by_user_id(user.id)
     else:
       sleep_diaries = find_sleep_diaries_by_user_id(user.id, week)
-    print(f"sleep_diaries: {sleep_diaries.items}")
     if not sleep_diaries:
         return "This user has no records in their sleep diary history."
     days = reduce(combine_string, list(map(lambda s: str(s.day), sleep_diaries.items)), '')
@@ -226,7 +224,6 @@ def user_sleep_diary_history(user, week=None):
     """
 
 def prompt_in_program(days_in_program, user):
-    print('228 fellas')
     week = days_in_program // 7
     if (week==0):
         prompt=f"""
@@ -260,10 +257,19 @@ def prompt_in_program(days_in_program, user):
         Give the user sleep advice based on Chapter 9 of the book 'Say Goodnight to Insomnia' by Gregg D Jacobs.
         Pick one topic to give new advice about for each day. Try to give only one piece of advice each day. 
         """
-    print (f'191, week: {week}')
+    elif (week==5):
+        prompt=f"""
+        Give the user sleep advice based on the book 'Say Goodnight to Insomnia' by Gregg D Jacobs.
+        Pick one topic to give new advice about for each day. Try to give only one piece of advice each day. 
+        """
+    else:
+        prompt=f"""
+        Give the user sleep advice based on the book 'Say Goodnight to Insomnia' by Gregg D Jacobs.
+        Pick one topic to give new advice about for each day. Try to give only one piece of advice each day. 
+        """
+
     prompt += sleep_summary(user, week)
     prompt += f"""
         Do not mention the book name and author name in your response.
         """
-    print ('195')
     return prompt
