@@ -73,4 +73,3 @@ def chat_history(user=None, guest_name=None):
     messages = load_messages(user, guest_name).items
     result = list(map(lambda m: m.with_sender(),  messages))
     return result
-

@@ -98,6 +98,16 @@ def messages_by_guest(guest, page):
     messages = Message.query.filter_by(guest=guest).order_by(Message.time_created.desc()).paginate(page=page, per_page=PAGE_SIZE)
     return messages
 
+def user_today_message_count(user):
+    today = datetime.now().replace(hour=6, minute=0, second=0)
+    message_count = Message.query.filter(Message.user_id==user.id, Message.type == 'USER', Message.time_created > today).count()
+    return message_count
+
+def guest_today_message_count(guest_name):
+    today = datetime.now().replace(hour=6, minute=0, second=0)
+    message_count = Message.query.filter(Message.guest==guest_name, Message.type == 'USER', Message.time_created > today).count()
+    return message_count
+
 def days_since_join_program(user_id):
     user = User.query.get(user_id)
     if user.data and user.data.get('six_week_program_start_time'):

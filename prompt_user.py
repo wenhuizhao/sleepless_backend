@@ -6,7 +6,6 @@ from db_service import find_sleep_diary_by_user_id_day, find_sleep_diaries_by_us
 from prompt_helper import add_question_chat_history
 from functools import reduce
 from date_util import days_in_program, time_difference
-from misc_util import average
 
 CORE_SLEEP_TIME = 530
 
@@ -124,7 +123,7 @@ def sleep_summary(user, week):
       positive_thoughts = sum(1 for sleep_diary in sleep_diaries if has_positive_thought(sleep_diary))
       
       summary_prompt = f"""
-      Give the user a week {adjusted_week} progress summary using their sleep diaries.
+      Give the user a week {week} progress summary using their sleep diaries.
       Include:
       1) the number of sleep diaries recorded by the user, {diary_count}
       2) the number of good nights of sleep, {good_nights}

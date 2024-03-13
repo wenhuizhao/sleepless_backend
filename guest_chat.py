@@ -2,10 +2,15 @@
 from chat_history import chat_history
 from prompt_base import first_prompt
 from answer_post_process import process_answer
-from db_service import find_guest_by_name, create_guest
+from db_service import find_guest_by_name, create_guest, guest_today_message_count
 from openai_chat import ask_question
 
+DAILY_MESSAGE_LIMIT = 12
+
 def guest_ask(guest_name, question):
+    if guest_today_message_count(guest_name) > DAILY_MESSAGE_LIMIT:
+        return {"answers": "You have exceeded your daily limit. Please become login to gain more daily messages.", "meta": {}}
+    
     history_messages = chat_history(guest_name=guest_name)
     guest = find_guest_by_name(guest_name)
     if not guest:
