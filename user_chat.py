@@ -7,7 +7,10 @@ DAILY_MESSAGE_LIMIT = 18
 
 def user_ask(user, question):
     if user_today_message_count(user) > DAILY_MESSAGE_LIMIT:
-        return {"answers": "You have exceeded your daily limit. Please become a member to gain unlimited messages.", "meta": {}}
+        return {"answers": """You have exceeded your daily limit. Sadly, running AI is rather expensive. 
+                Please come back tomorrow or become a member to gain unlimited messages. 
+                Plus, you can help keep us running.
+                """, "meta": {}}
     
     history_messages = chat_history(user=user)
     new_session = False
