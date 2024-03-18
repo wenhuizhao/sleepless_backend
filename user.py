@@ -17,8 +17,10 @@ class User(db.Model):
     data = db.Column(JSONB)
     thread_id = db.Column(db.String())
     role = db.Column(db.String())
+    subscription_status = db.Column(db.String())
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
     time_updated = db.Column(db.DateTime(timezone=True), onupdate=func.now())
+    time_subscribed = db.Column(db.DateTime(timezone=True))
 
     def __init__(self, name, email, avatar, role=None, data=None):
         self.name = name

@@ -119,6 +119,13 @@ def days_since_join_program(user_id):
         update_user(user)
     return days
 
+def update_subscription_status(user_email, status):
+    user = find_user_by_email(user_email)
+    if status == 'active':
+        user.time_subscribed = datetime.now(timezone.utc)
+    user.subscription_status = status
+    update_user(user)
+
 def create_sleep_diary(user_id, last_night_get_into_bed_time, last_night_turn_off_light_time, last_night_time_to_fall_asleep_in_minutes,
                  last_night_number_of_times_wakeup, last_night_each_wakeup_time_in_minutes, this_morning_wakeup_time,
                  this_morning_get_out_of_bed_time, last_night_sleep_quality, negative_sleep_thought, positive_sleep_thought):

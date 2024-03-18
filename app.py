@@ -20,6 +20,7 @@ from flask_migrate import Migrate
 from database import db
 from db_service import alchemyencoder, create_user, find_user_by_email, all_blogs, create_blog, blog_by_id, \
     sync_guest_data_to_user, update_user_timezone
+from stripe_service import create_intent, check_intent, create_subscription
 from s3_util import upload_file_to_s3
 
 app = Flask(__name__)
@@ -151,25 +152,10 @@ def sync_timezone_user():
 @app.route("/create-payment-intent", methods=["POST"])
 def create_payment():
     try:
-        stripe_keys = {
-            "secret_key": os.getenv("STRIPE_SECRET_KEY"),
-            "publishable_key": os.getenv("STRIPE_PUBLISHABLE_KEY"),
-        }
-        print(stripe_keys["publishable_key"])
-        stripe.api_key = stripe_keys["secret_key"]
         body = request.json
-        print("Call strip paymentIntent.create")
-        intent = stripe.PaymentIntent.create(
-            amount = body.get("amount"),
-            currency = "usd",
-            automatic_payment_methods={
-                "enabled": True,
-            },
-        
-          metadata = {
-              'customer': body.get("customer")
-          }
-        )
+        amount = body.get("amount")
+        customer = body.get("customer")
+        intent = create_intent(amount, customer)
         print(f"return intent:{intent}")
         return({
             'clientSecret': intent['client_secret']
@@ -179,31 +165,20 @@ def create_payment():
         
 @app.route('/api/activities/check-payment-intent', methods=['POST'])
 def check_payment():
-    stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-    endpoint_secret = os.getenv("STRIPE_ENDPOINT_KEY")
-
-    event = None
-    payload = request.data
-    sig_header = request.headers['STRIPE_SIGNATURE']
-
-    try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, endpoint_secret
-        )
-    except ValueError as e:
-        raise e
-    except stripe.error.SignatureVerificationError as e:
-        raise e
-
-    if event['type'] == 'payment_intent.succeeded':
-        payment_intent = event['data']['object']
-        user_uuid = payment_intent['metadata']['customer']
-        print(f"User {user_uuid} completed a payment.")
-    else:
-        print("Unhandled event type {}".format(event['type']))
+    event = check_intent(request)
       
     return jsonify(success=True)
-    
+
+@app.route("/prepare-subscription", methods=['POST'])
+def prepare_subscription():
+    current_user = get_current_user(request)
+    if (current_user == None):
+         return "permission denied", 401
+    try:
+        subscription = create_subscription(current_user)
+        return jsonify(subscriptionId=subscription.id, clientSecret=subscription.latest_invoice.payment_intent.client_secret)
+    except Exception as e:
+        return jsonify(error = {'message': e.user_message}), 400
 
 @app.route("/home")
 @login_required

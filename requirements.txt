@@ -85,6 +85,7 @@ soupsieve==2.5
 SQLAlchemy==2.0.27
 SQLAlchemy-serializer==1.4.1
 stack-data==0.6.3
+stripe==8.7.0
 tiktoken==0.5.2
 tinycss2==1.2.1
 tornado==6.4
