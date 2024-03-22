@@ -41,6 +41,13 @@ def find_user_by_email(email):
       return None
     return user
 
+def find_user_by_customer(customer):
+    try: 
+      user = session.execute(db.select(User).filter_by(customer=customer)).scalar_one()
+    except:
+      return None
+    return user
+
 def create_guest(name):
     guest = Guest(name=name, data={})
     try:
@@ -119,11 +126,12 @@ def days_since_join_program(user_id):
         update_user(user)
     return days
 
-def update_subscription_status(user_email, status):
-    user = find_user_by_email(user_email)
-    if status == 'active':
-        user.time_subscribed = datetime.now(timezone.utc)
-    user.subscription_status = status
+def update_subscription_status(customer, status):
+    user = find_user_by_customer(customer)
+    if not status == 'active':
+        user.subscription_status = status
+
+    user.time_subscribed = datetime.now(timezone.utc)
     update_user(user)
 
 def create_sleep_diary(user_id, last_night_get_into_bed_time, last_night_turn_off_light_time, last_night_time_to_fall_asleep_in_minutes,

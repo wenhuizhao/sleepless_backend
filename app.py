@@ -20,7 +20,7 @@ from flask_migrate import Migrate
 from database import db
 from db_service import alchemyencoder, create_user, find_user_by_email, all_blogs, create_blog, blog_by_id, \
     sync_guest_data_to_user, update_user_timezone
-from stripe_service import create_intent, check_intent, create_subscription
+from stripe_service import create_intent, handle_webhooks, create_subscription
 from s3_util import upload_file_to_s3
 
 app = Flask(__name__)
@@ -142,6 +142,7 @@ def sync_timezone_user():
     body = request.json
     timezone = body.get("timezone")
     current_user = get_current_user(request)
+    print(f"current_user {current_user}")
     update_user_timezone(timezone, current_user.email)
     return Response(
         response=json.dumps({}),
@@ -163,9 +164,10 @@ def create_payment():
     except Exception as e:
         return jsonify(error = str(e)), 403
         
-@app.route('/api/activities/check-payment-intent', methods=['POST'])
+@app.route('/webhooks', methods=['POST'])
 def check_payment():
-    event = check_intent(request)
+    print("check payment")
+    event = handle_webhooks(request)
       
     return jsonify(success=True)
 
@@ -305,7 +307,7 @@ def get_current_user(request):
         if auth_header and auth_header.startswith("Bearer "):
             encoded_jwt=request.headers.get("Authorization").split("Bearer ")[1]
             decoded_jwt=jwt.decode(encoded_jwt, app.secret_key, algorithms=[algorithm,])
-            #print(decoded_jwt)
+            print(decoded_jwt)
             current_user = find_user_by_email(decoded_jwt['email'])
             #print(current_user)
             return current_user

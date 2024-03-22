@@ -1,5 +1,6 @@
 import stripe
 import os
+from db_service import update_subscription_status, update_user
 
 stripe_keys = {
         "secret_key": os.getenv("STRIPE_SECRET_KEY"),
@@ -26,28 +27,57 @@ def create_intent(amount, customer):
     )
     return intent
 
-def check_intent(request):
+def handle_webhooks(request):
     event = None
     payload = request.data
-    sig_header = request.headers['STRIPE_SIGNATURE']
+    sig_header = request.headers.get('stripe_signature')
+    print(f"sig_header: {sig_header}")
     endpoint_secret_key = stripe_keys["endpoint_secret_key"]
 
+    #print (f"payload: {payload}")
     try:
         event = stripe.Webhook.construct_event(
-            payload, sig_header, endpoint_secret_key
+            payload=payload, sig_header=sig_header, secret=endpoint_secret_key
         )
-        if event['type'] == 'payment_intent.succeeded':
-            payment_intent = event['data']['object']
-            user_uuid = payment_intent['metadata']['consumer']
-            print(f"User {user_uuid} completed a payment.")
-
-        else:
-            print("Unhandled event type {}".format(event['type']))
+        #print(f"event:{event}")
+        data = event['data']
     except ValueError as e:
         raise e
     except stripe.error.SignatureVerificationError as e:
         raise e
     
+    event_type = event['type']
+    
+    if event_type == 'payment_intent.succeeded':
+        print("event:payment_intent.succeed")
+        payment_intent = event['data']['object']
+        user_uuid = payment_intent['metadata']['consumer']
+        print(f"Event: payment_intent.succeeded, User {user_uuid} completed a payment.")
+    elif event_type == 'payment_intent.payment_failed':
+        print(f"Event:payment_intent.payment_failed")
+        #print(data)
+    elif event_type == 'payment_intent.canceled':
+        print(f"Event:payment_intent.canceled")
+        #print(data)
+    elif event_type == 'payment_created':
+        print(f"Event:payment_created")
+        #print(data)
+    elif event_type == 'invoice.paid':
+        print(f"Event:invoice.paid")
+        print(data['object'])
+        if 'object' in data and 'customer' in data['object']:
+            customer = data['object']['customer']
+            print(f"customer:{customer}")
+            update_subscription_status(customer=customer, status='active')
+            print(data)
+        else:
+            print(f"no customer in event data: {data}")
+    elif event_type == 'invoice.payment_failed':
+        print(f"Event:invoice.payment_failed")
+        #print(data)
+    else:
+        print("Unhandled event type {}".format(event['type']))
+
     return event
 
 def create_subscription(user):
@@ -56,7 +86,9 @@ def create_subscription(user):
     if len(result.data) != 0:
         customer = result.data[0]
     else:
-        customer = stripe.Customer.create(email=user.email, name=user.name)
+        customer = stripe.Customer.create(email=user.email, name=user.name, metadata={user: user.id})
+        user.customer = customer.id
+        update_user(user)
     
     subscription = stripe.Subscription.create(
         customer=customer.id,
