@@ -5,3 +5,5 @@ Generic single-database configuration.
 After make model file changes, run the following command to upgrade database:
 `flask db migrate`
 `flask db upgrade`
+If you see error such as "Target database is not up to date", run command:
+`flask db stamp head`
