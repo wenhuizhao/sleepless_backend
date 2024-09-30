@@ -1,12 +1,15 @@
 import os
 from dotenv import load_dotenv
 import decimal, datetime
+import shortuuid
 from sqlalchemy.orm import sessionmaker
 from database import db
 from user import User
 from message import Message
 from blog import Blog
 from guest import Guest
+from podcast_item import PodcastItem
+from podcast import Podcast
 from sleep_diary import SleepDiary
 import dateutil.parser
 from datetime import datetime, timezone
@@ -228,4 +231,32 @@ def blog_by_id(blog_id):
 def all_blogs():
     result = session.scalars(db.select(Blog).order_by(Blog.time_created))
     return result
+
+def create_podcast_item(user, podcast_id,  title, description, url, duration, type):
+    podcast_item = PodcastItem(user_id=user.id, podcast_id=podcast_id, title=title, description=description,
+                               url=url, duration=duration, type=type)
+    podcast_item.guid = shortuuid.uuid()
+    try:
+        session.add(podcast_item)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        print(e)
+
+def create_podcast(user, title, subtitle, description, link, language, author, owner, image, category, explicit):
+    podcast = Podcast(user_id=user.id, title=title, subtitle=subtitle, description=description, link=link, language = language,
+                          author=author, owner=owner, image=image, category=category, explicit=explicit )
+    podcast.guid = shortuuid.uuid()
+    try:
+        session.add(podcast)
+        session.commit()
+    except:
+        session.rollback()
+
+def all_podcasts():
+    result = session.scalars(db.select(Podcast).join(Podcast.items).order_by(Podcast.time_created))
+    return result
+
+def podcast_by_id(podcast_id):
+    return session.scalar(db.select(Podcast).where(Podcast.id == podcast_id))
 

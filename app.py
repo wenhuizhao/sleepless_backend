@@ -19,7 +19,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from database import db
 from db_service import alchemyencoder, create_user, find_user_by_email, all_blogs, create_blog, blog_by_id, \
-    sync_guest_data_to_user, update_user_timezone
+    sync_guest_data_to_user, update_user_timezone, create_podcast_item, all_podcasts, podcast_by_id
 from stripe_service import create_intent, handle_webhooks, create_subscription
 from s3_util import upload_file_to_s3
 
@@ -259,6 +259,35 @@ def add_blog():
     else:
         return "permissoin denied", 401
 
+@app.route("/podcast_item", methods=["POST"])
+def add_podcast():
+    body = request.json
+    user = get_current_user(request)
+    if user and user.isAdmin():
+        create_podcast_item(user=user, podcast_id=body.get("podcast_id"), title=body.get("title"),
+                             description=body.get("description"), url=body.get("url"), duration=body.get("duration"),
+                             type=body.get('type'))
+        return Response (
+            response = json.dumps({})
+        )
+    else:
+        return "permissoin denied", 401
+
+@app.route("/podcasts", methods=["GET"])
+def get_podcasts():
+    podcasts_data = all_podcasts()
+    podcasts = [r.to_dict(only=('id', 'title', 'subtitle', 'description', 'link', 'items')) for r in podcasts_data]
+    return Response(
+        response = json.dumps(podcasts, default=alchemyencoder)
+    )
+
+@app.route("/rss", methods=["GET"])
+def rss():
+    podcasts_data = all_podcasts()
+    podcast_id = [r.to_dict(only=('id', 'title', 'time_created')) for r in podcasts_data][0]["id"]
+    podcast = podcast_by_id(podcast_id)
+    return Response(podcast.rss(), mimetype='application/rss+xml')
+
 @app.route("/upload_file", methods=["POST"])
 def upload_file():
     user = get_current_user(request)
@@ -318,7 +347,7 @@ def get_current_user(request):
         print(e)
         return None
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp3', 'wav'}
 # function to check file extension
 def allowed_file(filename):
     return '.' in filename and \
