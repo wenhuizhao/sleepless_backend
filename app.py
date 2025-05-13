@@ -263,6 +263,7 @@ def add_blog():
 def add_podcast():
     body = request.json
     user = get_current_user(request)
+    print(body.get("description"))
     if user and user.isAdmin():
         create_podcast_item(user=user, podcast_id=body.get("podcast_id"), title=body.get("title"),
                              description=body.get("description"), url=body.get("url"), duration=body.get("duration"),
@@ -336,7 +337,7 @@ def get_current_user(request):
         if auth_header and auth_header.startswith("Bearer "):
             encoded_jwt=request.headers.get("Authorization").split("Bearer ")[1]
             decoded_jwt=jwt.decode(encoded_jwt, app.secret_key, algorithms=[algorithm,])
-            print(decoded_jwt)
+            #print(decoded_jwt)
             current_user = find_user_by_email(decoded_jwt['email'])
             #print(current_user)
             return current_user

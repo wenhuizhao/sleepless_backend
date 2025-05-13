@@ -28,7 +28,7 @@ class PodcastItem(db.Model, SerializerMixin):
         self.user_id = user_id
         self.podcast_id = podcast_id
         self.title = title
-        self.descriptio  = description 
+        self.description  = description 
         self.url = url
         self.duration = duration
         self.type = type

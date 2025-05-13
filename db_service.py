@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import decimal, datetime
 import shortuuid
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import joinedload
 from database import db
 from user import User
 from message import Message
@@ -233,8 +234,10 @@ def all_blogs():
     return result
 
 def create_podcast_item(user, podcast_id,  title, description, url, duration, type):
+    print(description)
     podcast_item = PodcastItem(user_id=user.id, podcast_id=podcast_id, title=title, description=description,
                                url=url, duration=duration, type=type)
+    print(podcast_item.description)
     podcast_item.guid = shortuuid.uuid()
     try:
         session.add(podcast_item)
@@ -254,7 +257,7 @@ def create_podcast(user, title, subtitle, description, link, language, author, o
         session.rollback()
 
 def all_podcasts():
-    result = session.scalars(db.select(Podcast).join(Podcast.items).order_by(Podcast.time_created))
+    result = session.query(Podcast).options(joinedload(Podcast.items)).all()
     return result
 
 def podcast_by_id(podcast_id):

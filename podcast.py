@@ -22,18 +22,18 @@ class Podcast(db.Model, SerializerMixin):
     author = db.Column(JSONB)  #list of hash e.g. [{'name':'john', 'email': 'john@example.com', 'uri': ''}]
     owner = db.Column(db.String())
     image = db.Column(db.String())
-    category = db.Column(JSONB) #list of hash e.g.[{'term': 'technology', 'scheme': 'xx', 'label': 'technology'}]
+    category = db.Column(JSONB) #list of hash e.g.[{'cat': 'technology', 'sub': ''}]
     explicit = db.Column(db.String())
     guid = db.Column(db.String(), index=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
     time_updated = db.Column(db.DateTime(timezone=True), onupdate=func.now())
     items = db.relationship("PodcastItem", back_populates="podcast")
 
-    def __init__(self, user_id, title, subtitle, description, link, language, author, owner, image, category, explicit):
+    def __init__(self, user_id, title, subtitle, description, link, language, author, owner, image, category, explicit="no"):
         self.user_id = user_id
         self.title = title
         self.subtitle = subtitle
-        self.descriptio  = description 
+        self.description = description 
         self.link = link
         self.language = language
         self.author = author
@@ -50,18 +50,20 @@ class Podcast(db.Model, SerializerMixin):
         fg = FeedGenerator()
         fg.load_extension('podcast')
         fg.link(href=self.link)
+        fg.image( url=self.image, title=self.title )
+        fg.title(self.title)
+        fg.description(self.description)
         fg.podcast.itunes_author(self.author[0]['name'])
         fg.podcast.itunes_category(self.category)
-        fg.podcast.itunes_complete('yes')
+        fg.podcast.itunes_explicit(self.explicit)
         fg.podcast.itunes_image(self.image)
-        fg.title(self.title)
         fg.podcast.itunes_subtitle(self.subtitle)
-        fg.description(self.description)
         for item in self.items:
             fe = fg.add_entry()
             fe.id(item.url)
             fe.title(item.title)
             fe.description(item.description)
             fe.enclosure(item.url, item.duration, item.type)
+            fe.pubDate(item.time_created)
 
         return fg.rss_str()
